@@ -1,0 +1,10 @@
+.sudoku {
+    /* border: 1px solid black; */
+    /* padding:1em; */
+}
+
+.cell {
+    font-family: monospace;
+    /* font-size: 1.6em; */
+    /* text-align: center; */
+}
