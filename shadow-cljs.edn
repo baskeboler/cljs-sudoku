@@ -17,13 +17,11 @@
 
  :builds
  {:app {:target :browser
+        :build-options {:cache-level :off}
         :modules {:main {:init-fn cljs-sudoku.app/init!}}
         :devtools {:http-port 8080
                    :http-root "public"
                    ;; :preloads [day8.re-frame-10x.preload]
                    :preloads []
                    :after-load cljs-sudoku.app/init!}
-        :compiler-options {:optimizations :advanced
-                           :fn-invoke-direct true
-                           :elide-asserts false}
-        }}}
+        :compiler-options { :elide-asserts false}}}}

@@ -1,3 +1,6 @@
+body {
+    font-size: 26px;
+}
 .sudoku {
     /* border: 1px solid black; */
     /* padding:1em; */
@@ -5,6 +8,17 @@
 
 .cell {
     font-family: monospace;
+    margin: 0 0.2em;
+    padding: 0;
+    display: inline-block;
     /* font-size: 1.6em; */
     /* text-align: center; */
+}
+
+.columns {
+    margin-bottom: 0 !important;
+}
+.app {
+    margin: 0;
+    padding: 0;
 }

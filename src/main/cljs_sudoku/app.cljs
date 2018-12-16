@@ -19,12 +19,12 @@
 
 (defn sudoku-component [sud]
   (if @sud
-    [:div.sudoku
+    [:div.sudoku.card
      (for [[i r] (map-indexed #(vector %1 %2) (:rows @sud))]
-       [:div.columns.is-mobile.is-gapless
+       [:div.columns.is-mobile.is-gapless.is-centered>div.column
         {:key (str "row_" i)}
         (for [[j n] (map-indexed #(vector %1 %2) r)]
-          [:div.column.cell
+          [:span.cell
            {:key (str "cell_" i "_" j)}
            n])])]
     [:div "Apreta el boton"]))
@@ -36,17 +36,30 @@
                 "is-fullwidth" (when @loading? "is-loading")]}
        "quiero mas!"])
 
+(defn navbar []
+  [:nav.navbar.is-primary
+   {:role :navigation}
+   [:div.navbar-brand
+    [:div.navbar-item
+     [:h1
+      "sudoku"]]]])
+   
+
+
 (defn app [sudoku loading?]
   [:div.app
-   [:h1.title "chupate este sudoku"]
-   [:h2.subtitle "puto"]
-   [:hr]
-   [:div.columns.is-mobile.is-gapless>div.column
-    (when @sudoku
-      [sudoku-component sudoku])]
-   [:hr]
-   [:div.columns.is-mobile.is-gapless>div.column
-    [generate-btn sudoku loading?]]])
+   [navbar]
+   [:div.section
+    ;; [:h1.title "chupate este sudoku"]
+    ;; [:h2.subtitle "puto"]
+    ;; [:hr]
+    [:div.columns.is-mobile.is-gapless>div.column
+     (when @sudoku
+       [sudoku-component sudoku])]
+    [:hr]
+    [:div.columns.is-mobile.is-gapless>div.column
+     [generate-btn sudoku loading?]]]])
+
 (defn mount-components [sudoku loading?]
   (render
    [app sudoku loading?]
