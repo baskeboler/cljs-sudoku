@@ -1,5 +1,5 @@
 (ns cljs-sudoku.app
-  (:require ["react" ]
+  (:require ["react"]
             [reagent.core :as reagent :refer [atom render]]
             [cljs-sudoku.sudoku :as s :refer [random-sudoku]]
             [cljs.core.async :as async :refer [<! >! chan put! go go-loop]
@@ -36,29 +36,42 @@
                 "is-fullwidth" (when @loading? "is-loading")]}
        "quiero mas!"])
 
-(defn navbar []
+(defn navbar [sudoku loading?]
   [:nav.navbar.is-primary
    {:role :navigation}
    [:div.navbar-brand
     [:div.navbar-item
      [:h1
-      "sudoku"]]]])
-   
+      "sudoku"]]
+    #_[:div.navbar-item.is-pulled-right
+     [:button.button.is-primary
+      {:type :button
+       :on-click (generate-new sudoku loading?)
+       :class ["button"
+               "is-secondary"
+               (when @loading?
+                 "is-loading")]}
+      "Generar"]]]
+   [:div.navbar-menu.is-active
+    [:div.navbar-end
+     [:div.navbar-item
+      [:button.button.is-primary
+       {:type :button
+        :on-click (generate-new sudoku loading?)
+        :class ["button"
+                "is-secondary"
+                (when @loading?
+                  "is-loading")]}
+       "Generar"]]]]])
 
 
 (defn app [sudoku loading?]
   [:div.app
-   [navbar]
+   [navbar sudoku loading?]
    [:div.section
-    ;; [:h1.title "chupate este sudoku"]
-    ;; [:h2.subtitle "puto"]
-    ;; [:hr]
-    [:div.columns.is-mobile.is-gapless>div.column
+    [:div.columns.is-mobile.is-gapless>div.column.is-three-fifths-tablet.is-centered.is-full-mobile
      (when @sudoku
-       [sudoku-component sudoku])]
-    [:hr]
-    [:div.columns.is-mobile.is-gapless>div.column
-     [generate-btn sudoku loading?]]]])
+       [sudoku-component sudoku])]]])
 
 (defn mount-components [sudoku loading?]
   (render
