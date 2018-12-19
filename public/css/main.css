@@ -8,11 +8,17 @@ body {
 
 .cell {
     font-family: monospace;
-    margin: 0 0.2em;
-    padding: 0;
+    margin: 0 ;
+    padding: 0 0.4em;
     display: inline-block;
+
+    transition: 0.4s background-color ease-in-out;
     /* font-size: 1.6em; */
     /* text-align: center; */
+}
+
+.highlighted {
+    background-color: #FF000088;
 }
 
 .columns {

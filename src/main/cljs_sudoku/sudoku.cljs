@@ -297,3 +297,12 @@
 
 (defn get-past-sudokus []
   @sudokus)
+
+
+(defn neighbor-positions [i j]
+  (let [sb-x (long (/ i 3))
+        sb-y (long (/ j 3))]
+    (-> #{}
+         (into (for [a (range 9)] {:x i :y a}))
+         (into (for [a (range 9)] {:x a :y j}))
+         (into (for [a (range 3) b (range 3)] {:x (+ (* 3 sb-x) a) :y (+ (* 3 sb-y) b)})))))
