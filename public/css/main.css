@@ -1,5 +1,6 @@
+
 body {
-    font-size: 26px;
+    font-size: 19px;
 }
 .sudoku {
     /* border: 1px solid black; */
@@ -11,14 +12,18 @@ body {
     margin: 0 ;
     padding: 0 0.4em;
     display: inline-block;
-
+    border: 0.1px solid gray;
     transition: 0.4s background-color ease-in-out;
     /* font-size: 1.6em; */
     /* text-align: center; */
 }
 
 .highlighted {
-    background-color: #FF000088;
+    background-color: #FF000044;
+}
+
+.highlighted-secondary {
+    background-color: #FFFF0044;
 }
 
 .columns {
@@ -27,4 +32,28 @@ body {
 .app {
     margin: 0;
     padding: 0;
+}
+
+
+@media screen and (min-width: 320px) {
+    .cell {
+        font-size: 20px;
+    }
+}
+
+@media screen and (min-width: 375px) {
+    .cell {
+        font-size: 24px;
+    }
+}
+
+@media screen and (min-width: 425px) {
+    .cell {
+        font-size: 28px;
+    }
+}
+@media screen and (min-width: 768px) {
+    .cell {
+        font-size: 55px;
+    }
 }
