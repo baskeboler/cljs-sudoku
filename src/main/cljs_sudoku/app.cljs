@@ -1,5 +1,6 @@
 (ns cljs-sudoku.app
   (:require ["react"]
+            [shadow.loader :as loader]
             [reagent.core :as reagent :refer [atom render]]
             [clojure.set :as sets :refer [difference union]]
             [cljs-sudoku.sudoku :as s :refer [random-sudoku neighbor-positions]]
@@ -9,17 +10,44 @@
 (def current-view (atom :regular))
 
 
-(defn generate-new [sudoku loading?]
+(defn animate-transition
+  "animates the transition between one sudoku board and
+  another"
+  [sudoku new-sudoku busy?]
+  (when-not @busy?
+    (let [anim-chan (chan 82)
+          cell-changes (for [i (range 9) j (range 9)]
+                         {:x i
+                          :y j
+                          :dt (+ (*  90 j) (* i 100) 100)
+                          :new-val (s/get-position new-sudoku i j)})]
+      (reset! busy? true)
+      (doseq [change cell-changes]
+        (let [to-chan (async/timeout (:dt change))
+              finish-timeout (async/timeout 1000)]
+          (go
+            (<! to-chan)
+            (swap! sudoku s/set-position (:x change) (:y change) (:new-val change)))
+          (go
+            (<! finish-timeout)
+            (reset! busy? false)))))))
+
+
+(defn generate-new [sudoku loading? animating?]
   (fn [& opts]
     (reset! loading? true)
     (let [ch  (chan)]
       (go
         (>! ch (random-sudoku)))
-      (go-loop [res (<! ch)]
-        (if (= :ok (:result res))
-          (reset! sudoku (:data res))
-          (.log js/console "Error generating"))
-        (reset! loading? false)))))
+      (go
+        (let [res (<! ch)]
+          (if (= :ok (:result res))
+            ;; (reset! sudoku (:data res))
+            (if-not @sudoku
+              (reset! sudoku (:data res))
+              (animate-transition sudoku (:data res) animating?))
+            (.log js/console "Error generating"))
+          (reset! loading? false))))))
 
 (defn pagination
   [start end current fn-page]
@@ -82,24 +110,25 @@
         [:div.sudoku.card
          (doall
           (for [[i r] (map-indexed #(vector %1 %2) (:rows @sud))]
-           [:div.columns.is-mobile.is-gapless.is-centered>div.column
-            {:key (str "row_" i)}
-            (doall
-             (for [[j n] (map-indexed #(vector %1 %2) r)]
-              [:span.cell
-               {:key (str "cell_" i "_" j)
-                :class ["cell"
-                        (when (@highlighted {:x j :y i})
-                          "highlighted")
-                        (when (@highlighted-secondary n)
-                          "highlighted-secondary")]
-                :on-click (cell-click-fn j i n)}
-               n]))]))]
+            [:div.columns.is-mobile.is-gapless.is-centered
+             {:key (str "row_" i)}
+             [:div.column
+               (doall
+                (for [[j n] (map-indexed #(vector %1 %2) r)]
+                 [:span.cell
+                  {:key (str "cell_" i "_" j)
+                   :class ["cell"
+                           (when (@highlighted {:x j :y i})
+                             "highlighted")
+                           (when (@highlighted-secondary n)
+                             "highlighted-secondary")]
+                   :on-click (cell-click-fn j i n)}
+                  n]))]]))]
         [:div "Apreta el boton"]))))
 
-(defn generate-btn [sudoku loading?]
+(defn generate-btn [sudoku loading? animating?]
       [:a
-       {:on-click (generate-new sudoku loading?)
+       {:on-click (generate-new sudoku loading? animating?)
         :class ["button" "is-large" "is-primary"
                 "is-fullwidth" (when @loading? "is-loading")]}
        "quiero mas!"])
@@ -137,13 +166,15 @@
        [pagination start end current page-fn]
        [:hr]
        [sudoku-component current-sudoku]])))
+        
+      
 
-(defn regular-view [sudoku loading?]
+(defn regular-view [sudoku loading? animating?]
   [:div.section
     [:div.columns.is-mobile.is-gapless>div.column.is-centered.is-full-mobile
      [:button
       {:type :button
-       :on-click (generate-new sudoku loading?)
+       :on-click (generate-new sudoku loading? animating?)
        :class ["button"
                "is-fullwidth"
                "is-warning"
@@ -153,19 +184,23 @@
      [:hr]
      (when @sudoku
         [sudoku-component sudoku])]])
-(defn app [sudoku loading?]
+(defn app [sudoku loading? animating?]
   [:div.app
    [navbar sudoku loading?]
    (cond
-     (= @current-view :regular) [regular-view sudoku loading?]
+     (= @current-view :regular) [regular-view sudoku loading? animating?]
      (= @current-view :history) [past-sudokus-view])])
 
-(defn mount-components [sudoku loading?]
+(defn mount-components [sudoku loading? animating?]
   (render
-   [app sudoku loading?]
+   [app sudoku loading? animating?]
    (.getElementById js/document "root")))
 
 (defn init! []
   (let [sudoku   (atom nil)
-        loading? (atom false)]
-    (mount-components sudoku loading?)))
+        loading? (atom false)
+        animating? (atom false)]
+    (mount-components sudoku loading? animating?)))
+
+(do
+  (init!)) 
