@@ -3,8 +3,67 @@
             [clojure.set :refer [union difference]]
             [cljs-sudoku.sudoku :as s]
             [cljs.core.async :as async :refer [<! >! go]]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [stylefy.core :as stylefy]))
 
+#_(defn sudoku-component [sud]
+   (let [highlighted (atom #{})
+           highlighted-secondary (atom #{})
+           cell-click-fn (fn [x y value]
+                           (fn []
+                             (swap! highlighted union (s/neighbor-positions x y))
+                             (swap! highlighted-secondary conj value)
+                             (go
+                               (<! (async/timeout 2000))
+                               (swap! highlighted difference (s/neighbor-positions x y))
+                               (swap! highlighted-secondary disj value))))] 
+       (fn []
+         (if (and sud @sud)
+           [:div.sudoku.card
+            (doall
+             (for [[i r] (map-indexed #(vector %1 %2) (:rows @sud))]
+               [:div.columns.is-mobile.is-gapless.is-centered
+                {:key (str "row_" i)}
+                [:div.column
+                  (doall
+                   (for [[j n] (map-indexed #(vector %1 %2) r)]
+                    [:span.cell
+                     {:key (str "cell_" i "_" j)
+                      :class ["cell"
+                              (when (@highlighted {:x j :y i})
+                                "highlighted")
+                              (when (@highlighted-secondary n)
+                                "highlighted-secondary")]
+                      :on-click (cell-click-fn j i n)}
+                     n]))]]))]
+           [:div "Apreta el boton"]))))
+
+(def grid-style
+  {:display "flex"
+   :flex-flow "row wrap"
+   :width "100%"
+   :min-width "240px"})
+
+(def tile-style
+  {:flex-basis "calc(100%/9)"
+   :border "1px solid black"
+   :padding 0
+   ::stylefy/mode
+     {:after {:content ""
+              :padding-bottom "100%"
+              :display "block"}
+      ":nth-child(3n):not(:nth-child(9n))"
+      {:border-right "5px solid black"}
+      ":nth-child(n+19):nth-child(-n+27)"
+      {:border-bottom "5px solid black"}
+      ":nth-child(n+46):nth-child(-n+54)"
+      {:border-bottom "5px black solid"}}
+                   
+   
+   ::stylefy/sub-styles {:content {:position "relative"
+                                   :text-align :center
+                                   :left 0
+                                   :right 0}}})
 (defn sudoku-component [sud]
   (let [highlighted (atom #{})
         highlighted-secondary (atom #{})
@@ -18,23 +77,24 @@
                             (swap! highlighted-secondary disj value))))] 
     (fn []
       (if (and sud @sud)
-        [:div.sudoku.card
+        [:div (stylefy/use-style grid-style)
          (doall
           (for [[i r] (map-indexed #(vector %1 %2) (:rows @sud))]
-            [:div.columns.is-mobile.is-gapless.is-centered
-             {:key (str "row_" i)}
-             [:div.column
-               (doall
-                (for [[j n] (map-indexed #(vector %1 %2) r)]
-                 [:span.cell
-                  {:key (str "cell_" i "_" j)
-                   :class ["cell"
-                           (when (@highlighted {:x j :y i})
-                             "highlighted")
-                           (when (@highlighted-secondary n)
-                             "highlighted-secondary")]
-                   :on-click (cell-click-fn j i n)}
-                  n]))]]))]
+            (doall
+             (for [[j n] (map-indexed #(vector %1 %2) r)]
+               [:div (stylefy/use-style tile-style
+                                        {:key (str "cell_" i "_" j)
+                                         :class "cell"})
+                 [:div (stylefy/use-sub-style
+                           tile-style
+                           :content
+                            {:class [ 
+                                     (when (@highlighted {:x j :y i})
+                                      "highlighted")
+                                     (when (@highlighted-secondary n)
+                                      "highlighted-secondary")]
+                             :on-click (cell-click-fn j i n)})
+                  n]]))))]
         [:div "Apreta el boton"]))))
 
 

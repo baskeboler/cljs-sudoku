@@ -9,7 +9,8 @@
             [clojure.set :as sets :refer [difference union]]
             [cljs-sudoku.sudoku :as s :refer [random-sudoku neighbor-positions]]
             [cljs.core.async :as async :refer [<! >! chan put! go go-loop]
-             :include-macros true]))
+             :include-macros true]
+            [stylefy.core :as stylefy]))
 ;; (rf/dispatch-sync [:initialize])
 (rf/reg-sub
  :current-view
@@ -33,9 +34,8 @@
    (.getElementById js/document "root")))
 
 (defn init! []
+  (stylefy/init)
   (rf/dispatch-sync [:initialize])
   (rf/dispatch [:init-past-sudokus-view])
   (mount-components!))
 
-;; (do
-  ;; (init!)) 
