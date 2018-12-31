@@ -26,6 +26,12 @@ body {
     background-color: #FFFF0044;
 }
 
+.highlighted-main {
+    border-color: #FF0000 !important;
+    background-color: #FF0000;
+    color: white;
+    font-weight: 800;
+}
 .columns {
     margin-bottom: 0 !important;
 }

@@ -66,15 +66,22 @@
                                    :right 0}}})
 (defn sudoku-component [sud]
   (let [highlighted (atom #{})
+        highlighted-main (atom #{})
         highlighted-secondary (atom #{})
+        highlighted? (atom false)
         cell-click-fn (fn [x y value]
                         (fn []
-                          (swap! highlighted union (s/neighbor-positions x y))
-                          (swap! highlighted-secondary conj value)
-                          (go
-                            (<! (async/timeout 2000))
-                            (swap! highlighted difference (s/neighbor-positions x y))
-                            (swap! highlighted-secondary disj value))))] 
+                          (when-not @highlighted?
+                            (reset! highlighted? true)
+                            (swap! highlighted union (s/neighbor-positions x y))
+                            (swap! highlighted-secondary conj value)
+                            (swap! highlighted-main conj {:x x :y y})
+                            (go
+                              (<! (async/timeout 750))
+                              (swap! highlighted difference (s/neighbor-positions x y))
+                              (swap! highlighted-main disj {:x x :y y})
+                              (swap! highlighted-secondary disj value)
+                              (reset! highlighted? false)))))] 
     (fn []
       (if (and sud @sud)
         [:div (stylefy/use-style grid-style)
@@ -88,14 +95,15 @@
                  [:div (stylefy/use-sub-style
                            tile-style
                            :content
-                            {:class [ 
-                                     (when (@highlighted {:x j :y i})
+                           {:class [(when (@highlighted-main {:x j :y i})
+                                      "highlighted-main")
+                                    (when (@highlighted {:x j :y i})
                                       "highlighted")
-                                     (when (@highlighted-secondary n)
+                                    (when (@highlighted-secondary n)
                                       "highlighted-secondary")]
                              :on-click (cell-click-fn j i n)})
                   n]]))))]
-        [:div "Apreta el boton"]))))
+        [:div "Click on \"generate\"."]))))
 
 
 (defn pagination
@@ -117,31 +125,39 @@
      (cond
        (> 10 (- @end @start)) (doall
                                (for [i (range @start @end)]
-                                 [paging-item i {:key (str "item_" i)}]))
+                                 ^{:key (str "item_" i)}
+                                 [paging-item i]))
        (> 3 (- @current @start)) (doall
                                   (concat
                                    (for [i (range @start (+ 2 @current))
                                          :when (> @end i)]
-                                     [paging-item i {:key (str "item_" i)}])
-                                   [[:li
+                                     ^{:key (str "item_" i)}
+                                     [paging-item i])
+                                   [[:li {:key "elipsis_1"}
                                      [:span.pagination-ellipsis "..."]]
+                                    ^{:key (str "item_" @end)}
                                     [paging-item (dec @end)]]))
        (> 3 (- @end @current)) (doall
                                 (concat
-                                 [[paging-item @start]
-                                  [:li>span.ellipsis "..."]]
+                                 [^{:key "item_0"}
+                                   [paging-item @start]
+                                  [:li>span.ellipsis {:key "elipsis_1"} "..."]]
                                  (for [i (range (- @current 1) @end)
                                        :when (> @end i)]
-                                   [paging-item i {:key (str "item_" i)}])))
+                                   ^{:key (str "item_" i)}
+                                   [paging-item i])))
        :else (doall
               (concat
-               [[paging-item @start]
-                [:li>span.pagination-ellipsis "..."]]
+               [^{:key "item_0"}
+                [paging-item @start]
+                [:li>span.pagination-ellipsis {:key "elipsis_1"} "..."]]
                (for [i (range (- @current 1) (+ @current 2))
                      :when (> @end i)]
-                 [paging-item i {:key (str "item_" i)}])
-               [[:li>span.pagination-ellipsis "..."]
-                [paging-item (dec @end)]])))]]))
+                 ^{:key (str "item_" i)}
+                 [paging-item i])
+               [[:li>span.pagination-ellipsis {:key "elipsis_2"} "..."]
+                ^{:key (str "item_" @end)}
+                [paging-item  (dec @end)]])))]]))
 
 
 (defn navbar []
@@ -156,6 +172,6 @@
                    (rf/dispatch [:set-current-view :history])
                    (rf/dispatch [:set-current-view :regular]))}
      (if (= @(rf/subscribe [:current-view]) :regular)
-       "ver anteriores"
-       "generá más")]]])
+       "view previous"
+       "generate more")]]])
 

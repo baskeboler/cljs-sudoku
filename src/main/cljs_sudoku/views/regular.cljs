@@ -29,27 +29,24 @@
           cell-changes (into [] (for [i (range 9) j (range 9)]
                                   {:x i
                                    :y j
-                                   :dt (+ (*  90 j) (* i 100) 100)
+                                   :dt (* 10 (+ (*  9 j) i))
                                    :new-val (s/get-position new-sudoku i j)}))
-          finish-timeout (async/timeout 1000)]
+          finish-timeout (async/timeout 2000)]
       (rf/dispatch-sync [:set-animating? true])
       (doseq [change cell-changes]
-        (let [to-chan (async/timeout (:dt change))]
-              
+        (let [to-chan (async/timeout (+ 190 (:dt change)))]
           (go
             (<! to-chan)
-            (rf/dispatch [:update-current-sudoku
-                          (-> @(rf/subscribe [:current-sudoku])
-                              (s/set-position
-                               (:x change)
-                               (:y change)
-                               (:new-val change)))]))))
+            (rf/dispatch-sync [:update-current-sudoku
+                               (-> @(rf/subscribe [:current-sudoku])
+                                   (s/set-position
+                                    (:x change)
+                                    (:y change)
+                                    (:new-val change)))]))))
       (go
         (<! finish-timeout)
         (rf/dispatch [:set-animating? false])
-        (rf/dispatch [:cache-sudoku new-sudoku (random-uuid) (js/Date.)])))))
-     
-
+        (rf/dispatch-sync [:set-current-sudoku new-sudoku (random-uuid) (js/Date.)])))))
 
 (defn generate-new []
   (let [sudoku (rf/subscribe [:current-sudoku])
@@ -78,8 +75,7 @@
        {:on-click (generate-new)
         :class ["button" "is-large" "is-primary"
                 "is-fullwidth" (when @(rf/subscribe [:loading?]) "is-loading")]}
-       "quiero mas!"])
-      
+       "More!"])
 
 
 (defn regular-view []
@@ -93,6 +89,6 @@
               "is-warning"
               (when @(rf/subscribe [:loading?])
                 "is-loading")]}
-     "Generar"]
+     "Generate"]
     [:hr]
     [sudoku-component (rf/subscribe [:current-sudoku])]]])
