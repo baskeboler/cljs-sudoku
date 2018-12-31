@@ -11,11 +11,20 @@
                 (assoc :loading? false)
                 (assoc :animating? false)
                 (assoc :sudoku-cache {})
+                (assoc :navbar {:items {:history {:label "view previous"}
+                                        :regular {:label "generate more"}
+                                        :play {:label "play sudoku"}}
+                                :active? false})
+                                
+                                
                 (assoc :views {:regular {}
                                :past-sudokus {:current 0
                                               :start 0
                                               :end 0
-                                              :sudoku nil}}))))
+                                              :sudoku nil}
+                               :play {:current 0
+                                      :current-game nil
+                                      :var-count 12}}))))
 (rf/reg-event-db
  :init-past-sudokus-view
  (fn-traced [db _]
@@ -73,3 +82,23 @@
  (fn-traced [db [_ view]]
             (-> db
                 (assoc :current-view view))))
+
+(rf/reg-event-db
+ :set-current-game
+ (fn-traced [db [_ game]]
+      (-> db
+          (assoc-in [:views :play :current-game] game))))
+
+(rf/reg-event-db
+ :set-game-var-count
+ (fn-traced [db [_ n]]
+            (assoc-in db [:views :play :var-count] n)))
+
+(rf/reg-event-db
+ :set-game-var-value
+ (fn-traced [db [_ x y val]]))
+
+(rf/reg-event-db
+ :toggle-navbar-menu
+ (fn-traced [db _]
+            (update-in db [:navbar :active?] not)))

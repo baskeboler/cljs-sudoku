@@ -105,6 +105,64 @@
                   n]]))))]
         [:div "Click on \"generate\"."]))))
 
+(def input-style
+  {:font-size "inherit"
+   :text-align :center
+   :padding 0
+   :margin 0
+   :border :none
+   :height "100%"
+   :width "100%"})
+
+(defn game-component [game]
+  (let [highlighted (atom #{})
+        highlighted-main (atom #{})
+        highlighted-secondary (atom #{})
+        highlighted? (atom false)
+        cell-click-fn (fn [x y value is-var?]
+                        (fn []
+                          (when-not (or is-var? @highlighted?)
+                            (reset! highlighted? true)
+                            (swap! highlighted union (s/neighbor-positions x y))
+                            (swap! highlighted-secondary conj value)
+                            (swap! highlighted-main conj {:x x :y y})
+                            (go
+                              (<! (async/timeout 750))
+                              (swap! highlighted difference (s/neighbor-positions x y))
+                              (swap! highlighted-main disj {:x x :y y})
+                              (swap! highlighted-secondary disj value)
+                              (reset! highlighted? false)))))] 
+    (fn []
+      (if (and game @game)
+        [:div (stylefy/use-style grid-style)
+         (doall
+          (for [[i r] (map-indexed #(vector %1 %2) (get-in @game [:solution :rows]))]
+            (doall
+             (for [[j n] (map-indexed #(vector %1 %2) r)
+                   :let [var-set (->> (get @game :vars)
+                                      (map #(dissoc % :value))
+                                      (into #{}))
+                         is-var? (var-set {:x i :y j})]]
+               [:div (stylefy/use-style tile-style
+                                        {:key (str "cell_" i "_" j)
+                                         :class "cell"})
+                 [:div (stylefy/use-sub-style
+                           tile-style
+                           :content
+                           {:class (if-not is-var?
+                                     [(when (@highlighted-main {:x j :y i})
+                                        "highlighted-main")
+                                      (when (@highlighted {:x j :y i})
+                                        "highlighted")
+                                      (when (@highlighted-secondary n)
+                                        "highlighted-secondary")]
+                                     [])
+                             :on-click (cell-click-fn j i n is-var?)})
+                  (if is-var?
+                    [:input (stylefy/use-style input-style {:type :text})]
+                    n)]]))))]
+        [:div "Click on \"generate\"."]))))
+
 
 (defn pagination
   [start end current fn-page]
@@ -159,7 +217,6 @@
                 ^{:key (str "item_" @end)}
                 [paging-item  (dec @end)]])))]]))
 
-
 (defn navbar []
   [:nav.navbar.is-primary
    {:role :navigation}
@@ -167,11 +224,33 @@
     [:div.navbar-item
      [:h1
       "sudoku"]]
-    [:div.navbar-item>a
-     {:on-click #(if (= @(rf/subscribe [:current-view]) :regular)
+   
+    [:button.navbar-burger.button.is-primary
+     {:role :button
+      :aria-label :navigation
+      :aria-expanded false
+      :data-target "navMenu"
+      :on-click #(rf/dispatch [:toggle-navbar-menu])
+      :class (if @(rf/subscribe [:navbar-menu-active?])
+               ["is-active"]
+               [])}
+     [:span {:aria-hidden true}]
+     [:span {:aria-hidden true}]
+     [:span {:aria-hidden true}]]]
+   [:div.navbar-menu {:id "navMenu"
+                       :class (if @(rf/subscribe [:navbar-menu-active?])
+                                ["is-active"]
+                                [])}
+     [:div.navbar-start
+      (for [[item data] @(rf/subscribe [:navbar-items])]
+        [:a.navbar-item {:key (str "item_" item)
+                         :on-click #(rf/dispatch [:set-current-view item])}
+         (:label data)])]
+    #_[:div.navbar-item>a
+       {:on-click #(if (= @(rf/subscribe [:current-view]) :regular))
                    (rf/dispatch [:set-current-view :history])
-                   (rf/dispatch [:set-current-view :regular]))}
-     (if (= @(rf/subscribe [:current-view]) :regular)
-       "view previous"
-       "generate more")]]])
+                   (rf/dispatch [:set-current-view :regular])}
+       (if (= @(rf/subscribe [:current-view]) :regular)
+         "view previous"
+         "generate more")]]])
 

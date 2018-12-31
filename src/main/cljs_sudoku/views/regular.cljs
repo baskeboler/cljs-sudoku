@@ -6,18 +6,6 @@
 
 
 
-(rf/reg-sub
- :current-sudoku
- (fn [db _] (:current-sudoku db)))
-
-(rf/reg-sub
- :loading?
- (fn [db _] (:loading? db)))
-
-(rf/reg-sub
- :animating?
- (fn [db _] (:animating? db)))
-;; (def current-view (rf/subscribe [:current-view])))
 
 (defn animate-transition
   "animates the transition between one sudoku board and

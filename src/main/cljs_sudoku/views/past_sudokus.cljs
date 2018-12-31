@@ -5,44 +5,6 @@
             [cljs-sudoku.sudoku :as s]))
 
 
-(rf/reg-sub
- :past-sudokus-view
- (fn [db _]
-   (get-in db [:views :past-sudokus])))
-
-(rf/reg-sub
- :past-sudokus
- (fn [db _]
-   (->> (vals (:sudoku-cache db))
-        (vec)
-        (sort-by :created)
-        (mapv :sudoku))))
-
-(rf/reg-sub
- :past-sudokus-current-sudoku
- :<- [:past-sudokus-current-index]
- :<- [:past-sudokus]
- (fn [[idx sudokus-vec] _]
-   (nth sudokus-vec idx nil)))
-
-(rf/reg-sub
- :past-sudokus-start
- :<- [:past-sudokus-view]
- (fn [view _]
-   (:start view)))
-
-(rf/reg-sub
- :past-sudokus-end
- :<- [:past-sudokus]
- (fn [sudokus _]
-   (count sudokus)))
-
-(rf/reg-sub
- :past-sudokus-current-index
- :<- [:past-sudokus-view]
- (fn [view _]
-   (:current view)))
-
 
 (defn past-sudokus-view []
   (let [view-data (rf/subscribe [:past-sudokus-view])

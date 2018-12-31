@@ -307,3 +307,53 @@
          (into (for [a (range 9)] {:x a :y j}))
          (into (for [a (range 3) b (range 3)] {:x (+ (* 3 sb-x) a) :y (+ (* 3 sb-y) b)})))))
 
+
+(defrecord SudokuVar [x y value])
+(defrecord SudokuGame [solution vars])
+
+(defn ^Sudoku game-state
+  [^SudokuGame this]
+  (reduce (fn [res v]
+            (set-position res (:x v) (:y v) (:value v)))
+          (:solution this)
+          (:vars this)))
+
+(defn valid-solution? [^Sudoku sudoku]
+  (let [cells (for [i (range 9)
+                    j (range 9)]
+                {:x i
+                 :y j
+                 :value (get-position sudoku i j)})
+        all-defined? (every? #(not= 0 %) (map :value cells))
+        freedom (map #(available-values sudoku (:x %) (:y %)) cells)
+        no-freedom? (every? #(= 0 (count %)) freedom)]
+    (and all-defined? no-freedom?)))
+
+(defn is-single-solution-game? [^SudokuGame game]
+  (let [state (game-state game)
+        var-freedom (for [v (filter #(not= 0 %) (:vars game))]
+                      (available-values state (:x v) (:y v)))]
+    (every? #(= 1 (count %)) var-freedom)))
+
+
+(defn random-sudoku-positions [n]
+  (let [all-positions (for [i (range 9)
+                            j (range 9)]
+                        {:x i :y j})
+        shuffled (shuffle all-positions)]
+    (take n shuffled)))
+
+(defn random-game [solution var-count]
+  (let [positions (random-sudoku-positions var-count)
+        vars (map merge positions (repeat {:value 0}))]
+    (->SudokuGame solution vars)))
+
+(defn generate-game [solution var-count]
+  (loop [retries 500
+         game (random-game solution var-count)]
+    (cond
+      (= retries 0) {:status :error
+                     :message "Failed to find a valid game"}
+      (is-single-solution-game? game) {:status :ok
+                                       :game game}
+      :else (recur (dec retries) (random-game solution var-count)))))
