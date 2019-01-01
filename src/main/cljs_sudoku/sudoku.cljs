@@ -349,7 +349,7 @@
     (->SudokuGame solution vars)))
 
 (defn generate-game [solution var-count]
-  (loop [retries 500
+  (loop [retries 2000
          game (random-game solution var-count)]
     (cond
       (= retries 0) {:status :error

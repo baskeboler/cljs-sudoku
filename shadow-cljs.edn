@@ -22,7 +22,7 @@
  {:app {:target :browser
         :build-options {:cache-level :off}
         :modules {:main {:init-fn cljs-sudoku.app/init!}}
-        :devtools {:http-port 8080
+        :devtools {:http-port 8089
                    :http-root "public"
                    :repl-init-ns cljs-sudoku.app
                    :preloads [day8.re-frame-10x.preload]

@@ -1,6 +1,7 @@
 (ns cljs-sudoku.events
   (:require [re-frame.core :as rf]
-            [day8.re-frame.tracing :refer-macros [fn-traced]]))
+            [day8.re-frame.tracing :refer-macros [fn-traced]]
+            [cljs-sudoku.sudoku :as s]))
 
 (rf/reg-event-db
  :initialize
@@ -24,7 +25,7 @@
                                               :sudoku nil}
                                :play {:current 0
                                       :current-game nil
-                                      :var-count 12}}))))
+                                      :var-count 15}}))))
 (rf/reg-event-db
  :init-past-sudokus-view
  (fn-traced [db _]
@@ -96,7 +97,13 @@
 
 (rf/reg-event-db
  :set-game-var-value
- (fn-traced [db [_ x y val]]))
+ (fn-traced [db [_ x y value]]
+            (update-in db [:views :play :current-game :vars]
+                       (fn [vars]
+                         (map (fn [v]
+                                (if (and (= x (:x v)) (= y (:y v)))
+                                  (assoc v :value value)
+                                  v)) vars)))))
 
 (rf/reg-event-db
  :toggle-navbar-menu

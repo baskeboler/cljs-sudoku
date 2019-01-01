@@ -1,5 +1,6 @@
 (ns cljs-sudoku.subs
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [cljs-sudoku.sudoku :as s]))
 
 (rf/reg-sub
  :current-view
@@ -111,3 +112,23 @@
  (fn [game _]
    (->> (:vars game)
         (into #{}))))
+
+(rf/reg-sub
+ :current-game-var-value
+ :<- [:current-game-vars]
+ (fn [vars [_ x y]]
+   (-> (filter #(and (= x (:x %)) (= y (:y %))) vars)
+       (first)
+       :value)))
+
+(rf/reg-sub
+ :current-game-state
+ :<- [:current-game]
+ (fn [game _]
+   (s/game-state game)))
+
+(rf/reg-sub
+ :current-game-solved?
+ :<- [:current-game-state]
+ (fn [game-state _]
+   (s/valid-solution? game-state)))

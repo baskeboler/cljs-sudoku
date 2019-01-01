@@ -111,10 +111,11 @@
    :padding 0
    :margin 0
    :border :none
+   :color :grey
    :height "100%"
    :width "100%"})
 
-(defn game-component [game]
+(defn game-component [game input-fn]
   (let [highlighted (atom #{})
         highlighted-main (atom #{})
         highlighted-secondary (atom #{})
@@ -131,14 +132,20 @@
                               (swap! highlighted difference (s/neighbor-positions x y))
                               (swap! highlighted-main disj {:x x :y y})
                               (swap! highlighted-secondary disj value)
-                              (reset! highlighted? false)))))] 
+                              (reset! highlighted? false)))))
+        change-fn (fn [x y]
+                    (fn [evt]
+                      (js/console.log (-> evt .-target))
+                      (let [new-number (js/Number.parseInt (-> evt .-target .-value))]
+                        (input-fn x y new-number))))]
+                      
     (fn []
       (if (and game @game)
         [:div (stylefy/use-style grid-style)
          (doall
-          (for [[i r] (map-indexed #(vector %1 %2) (get-in @game [:solution :rows]))]
+          (for [[j r] (map-indexed #(vector %1 %2) (get-in @game [:solution :rows]))]
             (doall
-             (for [[j n] (map-indexed #(vector %1 %2) r)
+             (for [[i n] (map-indexed #(vector %1 %2) r)
                    :let [var-set (->> (get @game :vars)
                                       (map #(dissoc % :value))
                                       (into #{}))
@@ -150,16 +157,22 @@
                            tile-style
                            :content
                            {:class (if-not is-var?
-                                     [(when (@highlighted-main {:x j :y i})
+                                     [(when (@highlighted-main {:x i :y j})
                                         "highlighted-main")
-                                      (when (@highlighted {:x j :y i})
+                                      (when (@highlighted {:x i :y j})
                                         "highlighted")
                                       (when (@highlighted-secondary n)
                                         "highlighted-secondary")]
                                      [])
-                             :on-click (cell-click-fn j i n is-var?)})
+                             :on-click (cell-click-fn i j n is-var?)})
                   (if is-var?
-                    [:input (stylefy/use-style input-style {:type :text})]
+                    [:input (stylefy/use-style input-style
+                                               {:type :number
+                                                :on-change (change-fn i j)
+                                                :value (let [value @(rf/subscribe [:current-game-var-value i j])]
+                                                         (if (not= 0 value)
+                                                           value
+                                                           ""))})]
                     n)]]))))]
         [:div "Click on \"generate\"."]))))
 
