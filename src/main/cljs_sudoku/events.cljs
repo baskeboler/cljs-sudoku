@@ -8,12 +8,12 @@
  (fn-traced [db _]
             (-> {}
                 (assoc :current-sudoku nil)
-                (assoc :current-view :regular)
+                (assoc :current-view :play)
                 (assoc :loading? false)
                 (assoc :animating? false)
                 (assoc :sudoku-cache {})
-                (assoc :navbar {:items {:history {:label "view previous"}
-                                        :regular {:label "generate more"}
+                (assoc :navbar {:items {:history {:label "view previous solutions"}
+                                        :regular {:label "generate solutions"}
                                         :play {:label "play sudoku"}}
                                 :active? false})
                                 
@@ -25,7 +25,8 @@
                                               :sudoku nil}
                                :play {:current 0
                                       :current-game nil
-                                      :var-count 15}}))))
+                                      :var-count 15
+                                      :generating? false}}))))
 (rf/reg-event-db
  :init-past-sudokus-view
  (fn-traced [db _]
@@ -45,6 +46,7 @@
   [db [_ n]]
   (-> db
       (assoc-in [:views :past-sudokus :current] n))))
+
 (rf/reg-event-fx
  :set-current-sudoku
  (fn-traced [{:keys [db]} [_ sud id created]]
@@ -78,17 +80,26 @@
             (-> db
                 (assoc :animating? val))))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :set-current-view
- (fn-traced [db [_ view]]
-            (-> db
-                (assoc :current-view view))))
+ (fn-traced [{:keys [db]} [_ view]]
+            {:db (-> db
+                     (assoc :current-view view))
+             :dispatch [:toggle-navbar-menu]}))
 
 (rf/reg-event-db
  :set-current-game
  (fn-traced [db [_ game]]
       (-> db
           (assoc-in [:views :play :current-game] game))))
+
+(rf/reg-event-fx
+ :set-current-sudoku-and-game
+ (fn-traced [{:keys [db]} [_ sud id created game]]
+            {:db db
+             :dispatch-n [[:set-current-sudoku sud id created]
+                          [:set-current-game game]]}))
+                          
 
 (rf/reg-event-db
  :set-game-var-count

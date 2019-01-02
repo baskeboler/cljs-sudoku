@@ -8,21 +8,45 @@
   (let [n @(rf/subscribe [:current-game-var-count])
         sol @(rf/subscribe [:current-play-solution])
         game-result (s/generate-game sol n)]
-    (when-not (= :error (:status game-result))
-      (rf/dispatch [:set-current-game (:game game-result)]))))
+    (if-not (= :error (:status game-result))
+      (rf/dispatch [:set-current-game (:game game-result)])
+      (js/console.log "Could not find valid game. Booooo!"))))
+
+(defn generate-solution-and-game []
+  (let [n @(rf/subscribe [:current-game-var-count])
+        solution-result (s/random-sudoku)]
+    (if (= :ok (:result solution-result))
+      (let [game-result (s/generate-game (:data solution-result) n)]
+        (if (= :ok (:status game-result))
+          (rf/dispatch [:set-current-sudoku-and-game
+                        (:data solution-result)
+                        (random-uuid)
+                        (js/Date.)
+                        (:game game-result)])
+          (js/console.log "Failed to generate game.")))
+      (js/console.log "Failed to generate solution."))))
 
 (defn select-var-count []
   (let [n (rf/subscribe [:current-game-var-count])]
-    [:div.select
-     [:select
-      {:on-change #(rf/dispatch [:set-game-var-count
-                                 (js/Number.parseInt
-                                  (-> % .-target .-value))])}
-      (for [i (range 5 30)]
-        [:option {:key (str "option_" i)
-                  :selected (if (= i @n) true false)
-                  :value i}
-         i])]]))
+    [:div.field.has-addons
+     [:div.control
+      [:a.button.is-static "# of empty cells: "]]
+     [:div.control.is-expanded
+      [:div.select.is-fullwidth
+       [:select
+        {:on-change #(rf/dispatch [:set-game-var-count
+                                   (js/Number.parseInt
+                                    (-> % .-target .-value))])}
+        (for [i (range 5 30)]
+          [:option {:key (str "option_" i)
+                    :selected (if (= i @n) true false)
+                    :value i}
+           i])]]]
+     [:div.control
+      [:button.button.is-warning
+        {:type :button
+         :on-click generate-solution-and-game}
+       "get game"]]]))
 
 (defn input-control-fn [x y new-number]
   (if (and (>= new-number 1)
@@ -46,14 +70,10 @@
         game (rf/subscribe [:current-game])
         solved? (rf/subscribe [:current-game-solved?])]
     [:div.section.play-sudoku
-     [:h3 "Let's play"]
      [select-var-count]
      (when (and @game @solved?)
        [winning-modal])
-     [:button.button.is-warning
-      {:type :button
-       :on-click generate-game}
-      "get game"]
+     
      (when @game
        [game-component game input-control-fn])
      [:hr]

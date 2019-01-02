@@ -42,10 +42,12 @@
   (col [this j] "returns the j'th column")
   (subboard [this i j] "returns the sub-board that has coord i, j as upper left corner")
   (insert-subboard [this board i j] "insert subboard"))
+  ;; (get-position [this x y] "gets value at position x y")
+  ;; (set-position [this x y value] "sets value"))
 
 (defprotocol Positions
-  (get-position [this x y] "gets value at position x y")
-  (set-position [this x y value] "sets value"))
+   (get-position [this x y] "gets value at position x y")
+   (set-position [this x y value] "sets value"))
 
 (defn subboard? [s]
   (and (vector? s)
@@ -81,10 +83,16 @@
 
 (defn build-subboard [vals] (->SubBoard vals))
 
-(defrecord Sudoku
-           [rows]
-  BoardCoords
-  (insert-subboard
+(declare build-sudoku)
+
+
+(defn get-position [this x y] (get-in this  [:rows y x]))
+(defn set-position [this x y value]
+              (-> (assoc-in this [:rows y x] value)
+                  :rows
+                  (build-sudoku)))
+
+(defn insert-subboard
     [this board i j]
     (println "hola")
     (let [ps       (for [x (range i (+ 3 i))
@@ -99,24 +107,31 @@
                          (recur (rest positions)
                                 (set-board-pos rows2 y1 x1
                                                (nth board board-pos))))))]
-      (assoc this :rows new-rows)))
-  (row [this i]
-    (nth (:rows this) i))
-  (col [this i]
-    (nth (columns (:rows this)) i))
-  (subboard [this i j]
-    (let [i1 (long (/ i 3))
-          j1 (long (/ j 3))
-          values (for [i2 (range 3)
-                       j2 (range 3)
-                       :let [i3 (+ i2 i1)
-                             j3 (+ j2 j1)]]
-                   (get-position this i3 j3))]
-      (build-subboard (into [] values))))
-  Positions
-  (get-position [this x y] (get-in this  [:rows y x]))
-  (set-position [this x y value]
-    (assoc-in this [:rows y x] value)))
+      (build-sudoku new-rows)))
+
+(defn row [this i]
+  (nth (:rows this) i))
+
+(defn col [this i]
+  (nth (columns (:rows this)) i))
+
+(defn subboard [this i j]
+  (let [i1 (long (/ i 3))
+        j1 (long (/ j 3))
+        values (for [i2 (range 3)
+                     j2 (range 3)
+                     :let [i3 (+ i2 i1)
+                           j3 (+ j2 j1)]]
+                 (get-position this i3 j3))]
+    (build-subboard (into [] values))))
+
+(defrecord Sudoku
+           [rows])
+  
+  
+
+(defn build-sudoku [rows]
+  (->Sudoku rows))
 
 (defn ^Sudoku empty-sudoku []
   (->Sudoku
@@ -201,6 +216,7 @@
       values
       (let [[r1 r2] (split-at (rand-int (count values)) values)]
         (recur (dec i) (->> (concat r2 r1) (into [])))))))
+
 (defn posible-sb [sud i j]
   (let [freedom (sb-freedom sud i j)
         pos-val (sort-by
@@ -289,7 +305,7 @@
         (recur (dec retries) (maybe-sku))))))
 
 (defn print-sudoku [s]
-  (assert (isa? (type s) Sudoku))
+  (assert (isa?  (type s) Sudoku))
   (doseq [r (doall (:rows s))
           :let [line (join "   " r)]]
     (println line)
@@ -307,16 +323,27 @@
          (into (for [a (range 9)] {:x a :y j}))
          (into (for [a (range 3) b (range 3)] {:x (+ (* 3 sb-x) a) :y (+ (* 3 sb-y) b)})))))
 
-
+(declare game-state)
 (defrecord SudokuVar [x y value])
-(defrecord SudokuGame [solution vars])
+
+(defprotocol SudokuGameP
+  (get-solution [this])
+  (get-vars [this])
+  (get-game-state [this]))
+
+(defrecord SudokuGame [solution vars]
+  SudokuGameP
+  (get-solution [this] (:solution this))
+  (get-vars [this] (:vars this))
+  (get-game-state [this] (game-state this)))
 
 (defn ^Sudoku game-state
-  [^SudokuGame this]
-  (reduce (fn [res v]
-            (set-position res (:x v) (:y v) (:value v)))
-          (:solution this)
-          (:vars this)))
+  [^SudokuGame game]
+  (reduce (fn [^Sudoku res v]
+            (->Sudoku
+             (assoc-in (:rows res) [(:y v) (:x v)] (:value v))))
+          (:solution game)
+          (:vars game)))
 
 (defn valid-solution? [^Sudoku sudoku]
   (let [cells (for [i (range 9)
@@ -330,7 +357,7 @@
     (and all-defined? no-freedom?)))
 
 (defn is-single-solution-game? [^SudokuGame game]
-  (let [state (game-state game)
+  (let [^Sudoku state (get-game-state game)
         var-freedom (for [v (filter #(not= 0 %) (:vars game))]
                       (available-values state (:x v) (:y v)))]
     (every? #(= 1 (count %)) var-freedom)))
@@ -343,7 +370,7 @@
         shuffled (shuffle all-positions)]
     (take n shuffled)))
 
-(defn random-game [solution var-count]
+(defn ^SudokuGame random-game [^Sudoku solution var-count]
   (let [positions (random-sudoku-positions var-count)
         vars (map merge positions (repeat {:value 0}))]
     (->SudokuGame solution vars)))
