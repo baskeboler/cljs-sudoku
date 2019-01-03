@@ -2,7 +2,8 @@
   (:require [cljs-sudoku.components :refer [game-component]]
             [re-frame.core :as rf]
             [reagent.core :as reagent :refer [atom]]
-            [cljs-sudoku.sudoku :as s]))
+            [cljs-sudoku.sudoku :as s]
+            [cljs.core.async :as async :refer [<! >! go chan]]))
 
 (defn generate-game []
   (let [n @(rf/subscribe [:current-game-var-count])
@@ -14,19 +15,30 @@
 
 (defn generate-solution-and-game []
   (let [n @(rf/subscribe [:current-game-var-count])
-        solution-result (s/random-sudoku)]
-    (rf/dispatch [:set-game-is-generating true])
-    (if (= :ok (:result solution-result))
-      (let [game-result (s/generate-game (:data solution-result) n)]
-        (if (= :ok (:status game-result))
+        solution-result (s/random-sudoku)
+        sol-chan (chan)]
+    (rf/dispatch-sync [:set-game-is-generating true])
+    (go
+      (let [result (<! sol-chan)]
+        (if (= :ok (:status result))
           (rf/dispatch [:set-current-sudoku-and-game
-                        (:data solution-result)
+                        (:sudoku result)
                         (random-uuid)
                         (js/Date.)
-                        (:game game-result)])
-          (js/console.log "Failed to generate game.")))
-      (js/console.log "Failed to generate solution."))
-    (rf/dispatch [:set-game-is-generating false])))
+                        (:game result)])
+          (js/console.log (:message result)))))
+    (go
+      (if (= :ok (:result solution-result))
+        (let [game-result (s/generate-game (:data solution-result) n)]
+          (if (= :ok (:status game-result))
+            (>! sol-chan  {:status :ok
+                           :sudoku (:data solution-result)
+                           :game (:game game-result)})
+            (>! sol-chan {:status :error
+                          :message "Failed to generate game."})))
+        (>! sol-chan  {:status :error
+                       :message "Failed to generate solution."}))
+      (rf/dispatch [:set-game-is-generating false]))))
 
 (defn select-var-count []
   (let [n (rf/subscribe [:current-game-var-count])]
