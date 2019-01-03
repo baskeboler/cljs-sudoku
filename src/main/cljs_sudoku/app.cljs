@@ -15,10 +15,21 @@
             [stylefy.core :as stylefy]))
 ;; (rf/dispatch-sync [:initialize])
 
-      
+(def ribbon-style
+  {:position :fixed
+   :top 0
+   :left 0
+   :border 0
+   :z-index 31})
+(defn github-ribbon []
+  [:a (stylefy/use-style ribbon-style {:href "https://github.com/baskeboler/cljs-sudoku"})
+   [:img 
+    {:src "https://s3.amazonaws.com/github/ribbons/forkme_left_darkblue_121621.png"
+     :alt "Fork me on github"}]])
 
 (defn app []
   [:div.app
+   [github-ribbon]
    [navbar]
    (cond
      (= @(rf/subscribe [:current-view])
