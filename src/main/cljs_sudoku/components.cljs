@@ -258,12 +258,5 @@
       (for [[item data] @(rf/subscribe [:navbar-items])]
         [:a.navbar-item {:key (str "item_" item)
                          :on-click #(rf/dispatch [:set-current-view item])}
-         (:label data)])]
-    #_[:div.navbar-item>a
-       {:on-click #(if (= @(rf/subscribe [:current-view]) :regular))
-                   (rf/dispatch [:set-current-view :history])
-                   (rf/dispatch [:set-current-view :regular])}
-       (if (= @(rf/subscribe [:current-view]) :regular)
-         "view previous"
-         "generate more")]]])
+         (:label data)])]]])
 

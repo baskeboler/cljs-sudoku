@@ -107,6 +107,12 @@
    (:var-count view)))
 
 (rf/reg-sub
+ :current-game-generating?
+ :<- [:play-view]
+ (fn [view _]
+   (:generating? view)))
+
+(rf/reg-sub
  :current-game-vars
  :<- [:current-game]
  (fn [game _]
@@ -132,3 +138,9 @@
  :<- [:current-game-state]
  (fn [game-state _]
    (s/valid-solution? game-state)))
+
+(rf/reg-sub
+ :current-game-sound-triggered?
+ :<- [:play-view]
+ (fn [view _]
+   (:sound-triggered? view)))

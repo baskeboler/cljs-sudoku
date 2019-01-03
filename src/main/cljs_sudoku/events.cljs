@@ -16,8 +16,6 @@
                                         :regular {:label "generate solutions"}
                                         :play {:label "play sudoku"}}
                                 :active? false})
-                                
-                                
                 (assoc :views {:regular {}
                                :past-sudokus {:current 0
                                               :start 0
@@ -91,7 +89,8 @@
  :set-current-game
  (fn-traced [db [_ game]]
       (-> db
-          (assoc-in [:views :play :current-game] game))))
+          (assoc-in [:views :play :current-game] game)
+          (assoc-in [:views :play :sound-triggered?] false))))
 
 (rf/reg-event-fx
  :set-current-sudoku-and-game
@@ -99,7 +98,11 @@
             {:db db
              :dispatch-n [[:set-current-sudoku sud id created]
                           [:set-current-game game]]}))
-                          
+
+(rf/reg-event-db
+ :set-current-trigger-sound
+ (fn-traced [db _]
+            (assoc-in db [:views :play :sound-triggered?] true)))
 
 (rf/reg-event-db
  :set-game-var-count
@@ -115,6 +118,10 @@
                                 (if (and (= x (:x v)) (= y (:y v)))
                                   (assoc v :value value)
                                   v)) vars)))))
+(rf/reg-event-db
+ :set-game-is-generating
+ (fn-traced [db [_ generating?]]
+            (assoc-in db [:views :play :generating?] generating?)))
 
 (rf/reg-event-db
  :toggle-navbar-menu

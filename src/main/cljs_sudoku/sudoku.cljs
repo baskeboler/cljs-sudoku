@@ -370,6 +370,37 @@
         shuffled (shuffle all-positions)]
     (take n shuffled)))
 
+(defn get-block-number [try-number]
+  (long (mod try-number 9)))
+
+(defn get-block-base [try-number]
+  (let [block-number (get-block-number try-number)]
+    {:x (* 3 (mod block-number 3))
+     :y (* 3 (long (/ block-number 3)))}))
+
+(defn positions-by-block []
+  (into {} (for [i [0 4 8 1 7 3 5 2 6]]
+             [i (->>
+                 (for [x (range 3) y (range 3)
+                       :let [cell (-> (get-block-base i)
+                                     (update :x + x)
+                                     (update :y + y))]]
+                   cell)
+                 (into [])
+                 (shuffle))])))
+
+(defn random-positions-2 [n]
+  (let [positions (positions-by-block)]
+    (loop [remaining n
+           selected []]
+      (if (>= 0 remaining)
+        selected
+        (recur
+         (dec remaining)
+         (into selected [(get-in positions
+                                 [(mod remaining 6)
+                                  (long (/ (count selected) 6))])]))))))
+
 (defn ^SudokuGame random-game [^Sudoku solution var-count]
   (let [positions (random-sudoku-positions var-count)
         vars (map merge positions (repeat {:value 0}))]
