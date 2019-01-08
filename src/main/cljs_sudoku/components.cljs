@@ -6,38 +6,6 @@
             [re-frame.core :as rf]
             [stylefy.core :as stylefy]))
 
-#_(defn sudoku-component [sud]
-   (let [highlighted (atom #{})
-           highlighted-secondary (atom #{})
-           cell-click-fn (fn [x y value]
-                           (fn []
-                             (swap! highlighted union (s/neighbor-positions x y))
-                             (swap! highlighted-secondary conj value)
-                             (go
-                               (<! (async/timeout 2000))
-                               (swap! highlighted difference (s/neighbor-positions x y))
-                               (swap! highlighted-secondary disj value))))] 
-       (fn []
-         (if (and sud @sud)
-           [:div.sudoku.card
-            (doall
-             (for [[i r] (map-indexed #(vector %1 %2) (:rows @sud))]
-               [:div.columns.is-mobile.is-gapless.is-centered
-                {:key (str "row_" i)}
-                [:div.column
-                  (doall
-                   (for [[j n] (map-indexed #(vector %1 %2) r)]
-                    [:span.cell
-                     {:key (str "cell_" i "_" j)
-                      :class ["cell"
-                              (when (@highlighted {:x j :y i})
-                                "highlighted")
-                              (when (@highlighted-secondary n)
-                                "highlighted-secondary")]
-                      :on-click (cell-click-fn j i n)}
-                     n]))]]))]
-           [:div "Apreta el boton"]))))
-
 (def grid-style
   {:display "flex"
    :flex-flow "row wrap"
@@ -58,8 +26,6 @@
       {:border-bottom "5px solid black"}
       ":nth-child(n+46):nth-child(-n+54)"
       {:border-bottom "5px black solid"}}
-                   
-   
    ::stylefy/sub-styles {:content {:position "relative"
                                    :text-align :center
                                    :left 0
@@ -247,7 +213,6 @@
     [:div.navbar-item
      [:h1
       "sudoku"]]
-   
     [:button.navbar-burger.button.is-primary
      {:role :button
       :aria-label :navigation
@@ -266,8 +231,5 @@
                                 [])}
      [:div.navbar-start
       (for [[item data] @(rf/subscribe [:navbar-items])]
-        (with-meta [nav-item data] {:key (str "item_" item)})
-        #_[:a.navbar-item {:key (str "item_" item)
-                           :on-click #(rf/dispatch [:set-current-view item])}
-            (:label data)])]]])
+        (with-meta [nav-item data] {:key (str "item_" item)}))]]])
 

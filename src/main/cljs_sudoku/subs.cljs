@@ -55,7 +55,6 @@
 (rf/reg-sub
  :animating?
  (fn [db _] (:animating? db)))
-;; (def current-view (rf/subscribe [:current-view])))
 
 
 (rf/reg-sub
