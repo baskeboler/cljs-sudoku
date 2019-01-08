@@ -115,11 +115,12 @@
    :height "100%"
    :width "100%"})
 
-(defn game-component [game input-fn]
+(defn game-component [input-fn]
   (let [highlighted (atom #{})
         highlighted-main (atom #{})
         highlighted-secondary (atom #{})
         highlighted? (atom false)
+        game (rf/subscribe [:current-game])
         cell-click-fn (fn [x y value is-var?]
                         (fn []
                           (when-not (or is-var? @highlighted?)
@@ -138,7 +139,6 @@
                       (js/console.log (-> evt .-target))
                       (let [new-number (js/Number.parseInt (-> evt .-target .-value))]
                         (input-fn x y new-number))))]
-                      
     (fn []
       (if (and game @game)
         [:div (stylefy/use-style grid-style)
@@ -230,6 +230,16 @@
                 ^{:key (str "item_" @end)}
                 [paging-item  (dec @end)]])))]]))
 
+(defmulti nav-item :type)
+(defmethod nav-item :view [v]
+  [:a.navbar-item {:on-click #(rf/dispatch [:set-current-view (:id v)])}
+   (:label v)])
+
+(defmethod nav-item :link [l]
+  [:a.navbar-item {:href (:url l)
+                   :target :_blank}
+   (:label l)])
+
 (defn navbar []
   [:nav.navbar.is-primary
    {:role :navigation}
@@ -256,7 +266,8 @@
                                 [])}
      [:div.navbar-start
       (for [[item data] @(rf/subscribe [:navbar-items])]
-        [:a.navbar-item {:key (str "item_" item)
-                         :on-click #(rf/dispatch [:set-current-view item])}
-         (:label data)])]]])
+        (with-meta [nav-item data] {:key (str "item_" item)})
+        #_[:a.navbar-item {:key (str "item_" item)
+                           :on-click #(rf/dispatch [:set-current-view item])}
+            (:label data)])]]])
 

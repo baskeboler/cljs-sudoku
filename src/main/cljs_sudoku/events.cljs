@@ -12,9 +12,19 @@
                 (assoc :loading? false)
                 (assoc :animating? false)
                 (assoc :sudoku-cache {})
-                (assoc :navbar {:items {:history {:label "view previous solutions"}
-                                        :regular {:label "generate solutions"}
-                                        :play {:label "play sudoku"}}
+                (assoc :navbar {:items {:history {:id :history
+                                                  :type :view
+                                                  :label "view previous solutions"}
+                                        :regular {:id :regular
+                                                  :type :view
+                                                  :label "generate solutions"}
+                                        :play {:id :play
+                                               :type :view
+                                               :label "play sudoku"}
+                                        :github {:id :github
+                                                 :type :link
+                                                 :label "view on github"
+                                                 :url "http://github.com/baskeboler/cljs-sudoku"}}
                                 :active? false})
                 (assoc :views {:regular {}
                                :past-sudokus {:current 0
@@ -24,7 +34,9 @@
                                :play {:current 0
                                       :current-game nil
                                       :var-count 15
-                                      :generating? false}}))))
+                                      :generating? false
+                                      :status nil
+                                      :consecutive-generation-failures 0}}))))
 (rf/reg-event-db
  :init-past-sudokus-view
  (fn-traced [db _]
@@ -122,6 +134,27 @@
  :set-game-is-generating
  (fn-traced [db [_ generating?]]
             (assoc-in db [:views :play :generating?] generating?)))
+
+(rf/reg-event-fx
+ :set-game-generation-status
+ (fn-traced [{:keys [db]} [_ status]]
+            {:db (assoc-in db [:views :play :status] status)
+             :dispatch-n [(cond
+                            (and status (= :ok (:status status)))
+                            [:reset-game-generation-failures]
+                            (and status (= :error (:status status)))
+                            [:increment-game-generation-failures]
+                            :else nil)]}))
+
+(rf/reg-event-db
+ :increment-game-generation-failures
+ (fn-traced [db _]
+            (update-in db [:views :play :consecutive-generation-failures] inc)))
+
+(rf/reg-event-db
+ :reset-game-generation-failures
+ (fn-traced [db _]
+            (assoc-in db [:views :play :consecutive-generation-failures] 0)))
 
 (rf/reg-event-db
  :toggle-navbar-menu

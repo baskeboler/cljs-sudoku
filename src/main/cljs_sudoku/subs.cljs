@@ -144,3 +144,15 @@
  :<- [:play-view]
  (fn [view _]
    (:sound-triggered? view)))
+
+(rf/reg-sub
+ :current-game-generation-status
+ :<- [:play-view]
+ (fn [view _]
+   (:status view)))
+
+(rf/reg-sub
+ :current-game-generation-consecutive-failures
+ :<- [:play-view]
+ (fn [view _]
+   (:consecutive-generation-failures view)))
