@@ -4,6 +4,7 @@
             [cljs-sudoku.subs]
             [reagent.core :as reagent :refer [atom render]]
             [re-frame.core :as rf :include-macros true]
+            [day8.re-frame.http-fx]
             [cljs-sudoku.components :refer [sudoku-component pagination navbar]]
             [cljs-sudoku.views.past-sudokus :refer [past-sudokus-view]]
             [cljs-sudoku.views.regular :refer [regular-view]]

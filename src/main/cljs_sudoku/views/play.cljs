@@ -91,7 +91,7 @@
            :on-change #(rf/dispatch [:set-game-var-count
                                      (js/Number.parseInt
                                       (-> % .-target .-value))])}
-          (for [i (range 5 30)]
+          (for [i (range 5 50)]
             [:option {:key (str "option_" i)
                       ;; :selected (if (= i @n) true false)
                       :value i}

@@ -46,8 +46,8 @@
   ;; (set-position [this x y value] "sets value"))
 
 (defprotocol Positions
-   (get-position [this x y] "gets value at position x y")
-   (set-position [this x y value] "sets value"))
+  (get-position [this x y] "gets value at position x y")
+  (set-position [this x y value] "sets value"))
 
 (defn subboard? [s]
   (and (vector? s)
@@ -85,29 +85,28 @@
 
 (declare build-sudoku)
 
-
 (defn get-position [this x y] (get-in this  [:rows y x]))
 (defn set-position [this x y value]
-              (-> (assoc-in this [:rows y x] value)
-                  :rows
-                  (build-sudoku)))
+  (-> (assoc-in this [:rows y x] value)
+      :rows
+      (build-sudoku)))
 
 (defn insert-subboard
-    [this board i j]
-    (println "hola")
-    (let [ps       (for [x (range i (+ 3 i))
-                         y (range j (+ 3 j))]
-                     [x y])
-          new-rows (loop [positions ps
-                          rows2     rows]
-                     (if (empty? positions)
-                       rows2
-                       (let [[x1 y1] (first positions)
-                             board-pos (+ (* (- x1 i) 3) (- y1 j))]
-                         (recur (rest positions)
-                                (set-board-pos rows2 y1 x1
-                                               (nth board board-pos))))))]
-      (build-sudoku new-rows)))
+  [this board i j]
+  (println "hola")
+  (let [ps       (for [x (range i (+ 3 i))
+                       y (range j (+ 3 j))]
+                   [x y])
+        new-rows (loop [positions ps
+                        rows2     rows]
+                   (if (empty? positions)
+                     rows2
+                     (let [[x1 y1] (first positions)
+                           board-pos (+ (* (- x1 i) 3) (- y1 j))]
+                       (recur (rest positions)
+                              (set-board-pos rows2 y1 x1
+                                             (nth board board-pos))))))]
+    (build-sudoku new-rows)))
 
 (defn row [this i]
   (nth (:rows this) i))
@@ -127,8 +126,6 @@
 
 (defrecord Sudoku
            [rows])
-  
-  
 
 (defn build-sudoku [rows]
   (->Sudoku rows))
@@ -314,14 +311,13 @@
 (defn get-past-sudokus []
   @sudokus)
 
-
 (defn neighbor-positions [i j]
   (let [sb-x (long (/ i 3))
         sb-y (long (/ j 3))]
     (-> #{}
-         (into (for [a (range 9)] {:x i :y a}))
-         (into (for [a (range 9)] {:x a :y j}))
-         (into (for [a (range 3) b (range 3)] {:x (+ (* 3 sb-x) a) :y (+ (* 3 sb-y) b)})))))
+        (into (for [a (range 9)] {:x i :y a}))
+        (into (for [a (range 9)] {:x a :y j}))
+        (into (for [a (range 3) b (range 3)] {:x (+ (* 3 sb-x) a) :y (+ (* 3 sb-y) b)})))))
 
 (declare game-state)
 (defrecord SudokuVar [x y value])
@@ -356,12 +352,50 @@
         no-freedom? (every? #(= 0 (count %)) freedom)]
     (and all-defined? no-freedom?)))
 
-(defn is-single-solution-game? [^SudokuGame game]
+(comment
+  (defn is-single-solution-game? [^SudokuGame game])
   (let [^Sudoku state (get-game-state game)
         var-freedom (for [v (filter #(not= 0 %) (:vars game))]
                       (available-values state (:x v) (:y v)))]
     (every? #(= 1 (count %)) var-freedom)))
 
+(defn ordered-game-cell-opts [game]
+  (let [st (get-game-state game)]
+    (->> (for [{:keys [x y]} (filterv #(= 0 (:value %)) (:vars game))]
+           {:x x
+            :y y
+            :values (available-values st x y)})
+         (into [])
+         (sort-by #(count (:values %))))))
+
+(defn apply-vars-to-game [game vars]
+  (reduce (fn [g v]
+            (update g :vars (fn [var1]
+                              (map (fn [{:keys [x y value] :as vv}]
+                                     (if (and (= x (:x v))
+                                              (= y (:y v)))
+                                       (assoc vv :value (:value v))
+                                       vv))
+                                   var1))))
+          game
+          vars))
+
+(defn is-single-solution-game? [^SudokuGame game]
+  (let [var-freedom (ordered-game-cell-opts game)]
+    (loop [game1 game
+           freedom var-freedom]
+      (if (empty? freedom)
+        true
+        (let [single-options [(first freedom)]
+              new-game (apply-vars-to-game game1 single-options)
+              new-freedom (ordered-game-cell-opts new-game)]
+          (cond
+            (= 0 (count single-options))
+            false
+            (not-empty (filter #(= 0 (count (:values %))) new-freedom))
+            false
+            :else
+            (recur new-game new-freedom)))))))
 
 (defn random-sudoku-positions [n]
   (let [all-positions (for [i (range 9)
@@ -383,8 +417,8 @@
              [i (->>
                  (for [x (range 3) y (range 3)
                        :let [cell (-> (get-block-base i)
-                                     (update :x + x)
-                                     (update :y + y))]]
+                                      (update :x + x)
+                                      (update :y + y))]]
                    cell)
                  (into [])
                  (shuffle))])))

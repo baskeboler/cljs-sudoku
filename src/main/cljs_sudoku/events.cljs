@@ -160,3 +160,21 @@
  :toggle-navbar-menu
  (fn-traced [db _]
             (update-in db [:navbar :active?] not)))
+
+(rf/reg-event-fx
+ :fetch-websudoku
+ (fn-traced [{:keys [db]} _]
+            {:db db
+             :http-xhrio {:method :get
+                          :uri "http://localhost:8080/sudoku"
+                          :timeout 8000
+                          :response-format (ajax.core/json-response-format {:keywords? true})
+                          :on-success [:fetch-websudoku-success]
+                          :on-failure [:fetch-websudoku-failure]}}))
+
+(rf/reg-event-db
+ :fetch-websudoku-success
+ (fn-traced [db [_ result]]
+            (-> db
+                (assoc :websudoku-response result)
+                (assoc :websudoku-solution (s/->Sudoku (:solution result))))))

@@ -132,13 +132,14 @@
                                      [])
                              :on-click (cell-click-fn i j n is-var?)})
                   (if is-var?
-                    [:input (stylefy/use-style input-style
-                                               {:type :number
-                                                :on-change (change-fn i j)
-                                                :value (let [value @(rf/subscribe [:current-game-var-value i j])]
-                                                         (if (not= 0 value)
-                                                           value
-                                                           ""))})]
+                    [:input (stylefy/use-style
+                             input-style
+                             {:type :number
+                              :on-change (change-fn i j)
+                              :value (let [value @(rf/subscribe [:current-game-var-value i j])]
+                                       (if (not= 0 value)
+                                         value
+                                         ""))})]
                     n)]]))))]
         [:div "Click on \"generate\"."]))))
 
@@ -147,8 +148,7 @@
   [start end current fn-page]
   (let [paging-item (fn [page-num]
                       [:li>a
-                       {
-                        :class ["pagination-link" (when (= @current page-num) "is-current")]
+                       {:class ["pagination-link" (when (= @current page-num) "is-current")]
                         :on-click #(fn-page page-num)}
                        page-num])]
    [:nav.pagination
