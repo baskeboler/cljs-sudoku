@@ -1,5 +1,5 @@
 # cljs-sudoku
-a random sudoku solution generator in clojurescript. check it out at http://baskeboler.github.io/cljs-sudoku 
+a random sudoku solution generator in clojurescript. check it out at https://cljs-sudoku.netlify.app/
 
 ## Running locally
 
