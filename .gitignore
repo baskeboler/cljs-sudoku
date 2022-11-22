@@ -63,3 +63,8 @@ typings/
 .next
 
 public/js
+.clj-kondo
+.shadow-cljs
+.lsp 
+
+public/css/styles.css

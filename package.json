@@ -4,17 +4,31 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch:cljs": "npx shadow-cljs watch app",
+    "watch:css": "npx tailwindcss -i src/css/styles.css -o public/css/styles.css --watch",
+    "watch": "npx concurrently npm:watch:*",
+    "release:cljs": "npx shadow-cljs release app",
+    "release:css": "npx tailwindcss -i src/css/styles.css -o public/css/styles.css -m",
+    "release": "npm run release:cljs && npm run release:css",
+    "clean": "npx cross-env rm public/css/styles.css public/js/cljs-runtime/*.js public/js/main.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "create-react-class": "^15.6.3",
-    "highlight.js": "^10.4.1",
-    "react": "^16.7.0",
-    "react-dom": "^16.7.0",
-    "react-flip-move": "^3.0.3",
-    "react-highlight.js": "^1.0.7"
+    "highlight.js": "11.5.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@headlessui/react": "^1.7.4",
+    "@heroicons/react": "^2.0.13",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.3",
+    "@tailwindcss/typography": "^0.5.8",
+    "concurrently": "^7.5.0",
+    "shadow-cljs": "latest",
+    "tailwindcss": "^3.2.2"
   }
 }

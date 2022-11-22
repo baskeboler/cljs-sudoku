@@ -9,7 +9,8 @@
 (def grid-style
   {:display "flex"
    :flex-flow "row wrap"
-   :width "100%"
+  ;;  :width "100%"
+   :margin "2em"
    :min-width "240px"})
 
 (def tile-style
@@ -50,7 +51,7 @@
                               (reset! highlighted? false)))))] 
     (fn []
       (if (and sud @sud)
-        [:div (stylefy/use-style grid-style)
+        [:div.m-5 (stylefy/use-style grid-style)
          (doall
           (for [[i r] (map-indexed #(vector %1 %2) (:rows @sud))]
             (doall
@@ -197,39 +198,197 @@
                 [paging-item  (dec @end)]])))]]))
 
 (defmulti nav-item :type)
+
+(defmulti nav-item-mobile :type)
 (defmethod nav-item :view [v]
-  [:a.navbar-item {:on-click #(rf/dispatch [:set-current-view (:id v)])}
+  [:a
+   {:on-click #(rf/dispatch [:set-current-view (:id v)]),
+    :class
+    (str "rounded-md px-3 py-2 text-sm font-medium "
+         (if (= (:id v) @(rf/subscribe [:current-view]))
+           "bg-gray-900 text-white"
+           "text-gray-300 hover:bg-gray-700 hover:text-white"))}
+   (:label v)]
+  #_[:a.navbar-item {:on-click #(rf/dispatch [:set-current-view (:id v)])}
    (:label v)])
 
+(defmethod nav-item-mobile :view [v]
+  [:a
+   {:on-click #(rf/dispatch [:set-current-view (:id v)]),
+    :class
+    (str "block rounded-md px-3 py-2 text-base font-medium  "
+         (if (= (:id v) @(rf/subscribe [:current-view]))
+           "bg-gray-900 text-white"
+           "text-gray-300 hover:bg-gray-700 hover:text-white"))}
+   (:label v)]
+  #_[:a.navbar-item {:on-click #(rf/dispatch [:set-current-view (:id v)])}
+     (:label v)])
+
 (defmethod nav-item :link [l]
-  [:a.navbar-item {:href (:url l)
+   [:a
+    {:href (:url l) ,
+     :class
+     "rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"}
+    (:label l)] )
+
+(defmethod nav-item-mobile :link [l]
+   [:a
+    {:href (:url l) ,
+     :class
+     "block rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"}
+    (:label l)]
+  #_[:a.navbar-item {:href (:url l)
                    :target :_blank}
    (:label l)])
 
-(defn navbar []
-  [:nav.navbar.is-primary
-   {:role :navigation}
-   [:div.navbar-brand
-    [:div.navbar-item
-     [:h1
-      "sudoku"]]
-    [:button.navbar-burger.button.is-primary
-     {:role :button
-      :aria-label :navigation
-      :aria-expanded false
-      :data-target "navMenu"
-      :on-click #(rf/dispatch [:toggle-navbar-menu])
-      :class (if @(rf/subscribe [:navbar-menu-active?])
-               ["is-active"]
-               [])}
-     [:span {:aria-hidden true}]
-     [:span {:aria-hidden true}]
-     [:span {:aria-hidden true}]]]
-   [:div.navbar-menu {:id "navMenu"
-                       :class (if @(rf/subscribe [:navbar-menu-active?])
-                                ["is-active"]
-                                [])}
-     [:div.navbar-start
-      (for [[item data] @(rf/subscribe [:navbar-items])]
-        (with-meta [nav-item data] {:key (str "item_" item)}))]]])
+(defmethod nav-item :tw-desktop [l])
 
+
+
+(defn tw-navbar []
+  [:nav
+   {:class "bg-gray-800"}
+   [:div
+    {:class "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"}
+    [:div
+     {:class "flex h-16 items-center justify-between"}
+     [:div
+      {:class "flex items-center"}
+      [:div
+       {:class "flex-shrink-0"}
+       [:img
+        {:class "block h-8 w-auto lg:hidden",
+         :src
+         "https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500",
+         :alt "Your Company"}]
+       [:img
+        {:class "hidden h-8 w-auto lg:block",
+         :src
+         "https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500",
+         :alt "Your Company"}]]
+      [:div
+       {:class "hidden sm:ml-6 sm:block"}
+       [:div
+        {:class "flex space-x-4"}
+        (for [[item data] @(rf/subscribe [:navbar-items])]
+          (with-meta [nav-item data] {:key (str "item_" item)}))]]]
+     [:div
+      {:class "hidden sm:ml-6 sm:block"}
+      [:div
+       {:class "flex items-center"}]]
+     [:div
+      {:class "-mr-2 flex sm:hidden"}
+      [:button
+       {:type "button",
+        :on-click #(rf/dispatch [:toggle-navbar-menu])
+        :class
+        "inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white",
+        :aria-controls "mobile-menu",
+        :aria-expanded "false"}
+       [:span {:class "sr-only"} "Open main menu"]
+       [:svg
+        {:class "block h-6 w-6",
+         :xmlns "http://www.w3.org/2000/svg",
+         :fill "none",
+         :viewBox "0 0 24 24",
+         :stroke-width "1.5",
+         :stroke "currentColor",
+         :aria-hidden "true"}
+        [:path
+         {:stroke-linecap "round",
+          :stroke-linejoin "round",
+          :d "M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"}]]
+       [:svg
+        {:class "hidden h-6 w-6",
+         :xmlns "http://www.w3.org/2000/svg",
+         :fill "none",
+         :viewBox "0 0 24 24",
+         :stroke-width "1.5",
+         :stroke "currentColor",
+         :aria-hidden "true"}
+        [:path
+         {:stroke-linecap "round",
+          :stroke-linejoin "round",
+          :d "M6 18L18 6M6 6l12 12"}]]]]]]
+   [:div
+    {:class (str "sm:hidden " (when-not @(rf/subscribe [:navbar-menu-active?]) "hidden")) , :id "mobile-menu"}
+    [:div
+     {:class "space-y-1 px-2 pt-2 pb-3"}
+     (comment [:a
+               {:href "#",
+                :class
+                "block rounded-md bg-gray-900 px-3 py-2 text-base font-medium text-white"}
+               "Dashboard"]
+              
+              [:a
+               {:href "#",
+                :class
+                "block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"}
+               "Team"]
+              
+              [:a
+               {:href "#",
+                :class
+                "block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"}
+               "Projects"]
+              
+              [:a
+               {:href "#",
+                :class
+                "block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white"}
+               "Calendar"]
+              )
+     (for [[item data] @(rf/subscribe [:navbar-items])]
+       (with-meta [nav-item-mobile data] {:key (str "item_" item)}))]
+    #_[:div
+     {:class "border-t border-gray-700 pt-4 pb-3"}
+     [:div
+      {:class "flex items-center px-5"}
+      [:div
+       {:class "flex-shrink-0"}
+       [:img
+        {:class "h-10 w-10 rounded-full",
+         :src
+         "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+         :alt ""}]]
+      [:div
+       {:class "ml-3"}
+       [:div {:class "text-base font-medium text-white"} "Tom Cook"]
+       [:div
+        {:class "text-sm font-medium text-gray-400"}
+        "tom@example.com"]]
+      [:button
+       {:type "button",
+        :class
+        "ml-auto flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"}
+       [:span {:class "sr-only"} "View notifications"]
+       [:svg
+        {:class "h-6 w-6",
+         :xmlns "http://www.w3.org/2000/svg",
+         :fill "none",
+         :viewBox "0 0 24 24",
+         :stroke-width "1.5",
+         :stroke "currentColor",
+         :aria-hidden "true"}
+        [:path
+         {:stroke-linecap "round",
+          :stroke-linejoin "round",
+          :d
+          "M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"}]]]]
+     [:div
+      {:class "mt-3 space-y-1 px-2"}
+      [:a
+       {:href "#",
+        :class
+        "block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"}
+       "Your Profile"]
+      [:a
+       {:href "#",
+        :class
+        "block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"}
+       "Settings"]
+      [:a
+       {:href "#",
+        :class
+        "block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"}
+       "Sign out"]]]]])

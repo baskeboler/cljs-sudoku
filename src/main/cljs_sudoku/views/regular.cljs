@@ -72,11 +72,8 @@
     [:button
      {:type :button
       :on-click (generate-new)
-      :class ["button"
-              "is-fullwidth"
-              "is-warning"
-              (when @(rf/subscribe [:loading?])
-                "is-loading")]}
+      :class "inline-flex my-3 items-center rounded-full border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 "
+      }
      "Generate"]
     [:hr]
     [sudoku-component (rf/subscribe [:current-sudoku])]]])

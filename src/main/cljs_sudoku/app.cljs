@@ -2,10 +2,11 @@
   (:require ["react"]
             [cljs-sudoku.events]
             [cljs-sudoku.subs]
-            [reagent.core :as reagent :refer [atom render]]
+            [reagent.core :as reagent :refer [atom]]
+            [reagent.dom :as rdom]
             [re-frame.core :as rf :include-macros true]
             [day8.re-frame.http-fx]
-            [cljs-sudoku.components :refer [sudoku-component pagination navbar]]
+            [cljs-sudoku.components :refer [sudoku-component pagination tw-navbar]]
             [cljs-sudoku.views.past-sudokus :refer [past-sudokus-view]]
             [cljs-sudoku.views.regular :refer [regular-view]]
             [cljs-sudoku.views.play :refer [play-view]]
@@ -17,7 +18,7 @@
 
 (defn app []
   [:div.app
-   [navbar]
+   [tw-navbar]
    (cond
      (= @(rf/subscribe [:current-view])
         :regular) [regular-view]
@@ -27,7 +28,7 @@
         :play) [play-view])])
 
 (defn mount-components! []
- (render
+ (rdom/render
    [app]
    (.getElementById js/document "root")))
 

@@ -64,14 +64,15 @@
   (let [status (rf/subscribe [:current-game-generation-status])]
     [:button
      {:type :button
-      :class (concat
-              ["button" (cond
-                          (nil? @status ) "is-primary"
-                          (= :ok (:status @status)) "is-success"
-                          (= :error (:status @status)) "is-danger")]
+      :class (str 
+              "inline-flex my-3 items-center rounded-full border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 " 
+              (cond
+                (nil? @status ) "is-primary"
+                (= :ok (:status @status)) "is-success"
+                (= :error (:status @status)) "is-danger")
               (if @(rf/subscribe [:current-game-generating?])
-                ["is-loading"]
-                []))
+                " is-loading"
+                ""))
       :on-click generate-solution-and-game}
      (if (nil? @status)
        "get game"
@@ -81,23 +82,27 @@
   (let [n (rf/subscribe [:current-game-var-count])
         fails (rf/subscribe [:current-game-generation-consecutive-failures])]
     [:div.field
-     [:div.field.has-addons
-       [:div.control
-        [:a.button.is-static "# empty cells: "]]
-       [:div.control.is-expanded
-        [:div.select.is-fullwidth
-         [:select
-          {:value @n
-           :on-change #(rf/dispatch [:set-game-var-count
-                                     (js/Number.parseInt
-                                      (-> % .-target .-value))])}
-          (for [i (range 5 50)]
-            [:option {:key (str "option_" i)
+     [:div
+      
+      [:label
+       {:class "block text-sm font-medium text-gray-700"}
+       "# empty cells: "]
+      ;; [:div.control.is-expanded]
+        ;; [:div.select.is-fullwidth]
+      [:div.mt-1
+       [:select
+        {:value @n
+         :class "mt-1 block sm:w-full lg:w-auto  rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+         :on-change #(rf/dispatch [:set-game-var-count
+                                   (js/Number.parseInt
+                                    (-> % .-target .-value))])}
+        (for [i (range 5 50)]
+          [:option {:key (str "option_" i)
                       ;; :selected (if (= i @n) true false)
-                      :value i}
-             i])]]]
-       [:div.control
-        [get-game-button]]]
+                    :value i}
+           i])]]
+      [:div.control
+       [get-game-button]]]
      (when (>= @fails 5)
        [:p.help.is-danger "Try with fewer empty cells"])]))
 
